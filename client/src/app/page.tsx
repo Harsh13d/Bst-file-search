@@ -123,7 +123,7 @@
 // }
 "use client";
 
-import { useState } from "react";
+import { useState, ChangeEvent } from "react";
 
 interface SearchResult {
   success: boolean;
@@ -146,9 +146,12 @@ export default function Home() {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus | null>(null);
 
   // Handle file search
-  const handleSearch = async () => {
+  const handleSearch = async (): Promise<void> => {
     try {
       const res = await fetch(`https://bst-file-search.vercel.app/search?key=${query}`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
       const data: SearchResult = await res.json();
       setResult(data);
     } catch (error: unknown) {
@@ -158,7 +161,7 @@ export default function Home() {
   };
 
   // Handle file upload
-  const handleUpload = async () => {
+  const handleUpload = async (): Promise<void> => {
     if (!file) {
       alert("Please select a file to upload.");
       return;
@@ -172,6 +175,9 @@ export default function Home() {
         method: "POST",
         body: formData,
       });
+      if (!res.ok) {
+        throw new Error(`HTTP error! Status: ${res.status}`);
+      }
       const data: UploadStatus = await res.json();
       setUploadStatus(data);
       setFile(null); // Reset the file input
@@ -179,6 +185,11 @@ export default function Home() {
       console.error("Error uploading file:", error);
       setUploadStatus({ success: false, message: "Error uploading file." });
     }
+  };
+
+  // Handle file input change
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setFile(e.target.files ? e.target.files[0] : null);
   };
 
   return (
@@ -221,7 +232,7 @@ export default function Home() {
         <h2 className="text-lg font-semibold text-gray-700 mb-4">Upload a File</h2>
         <input
           type="file"
-          onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+          onChange={handleFileChange}
           className="mb-4 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
         />
         <button
